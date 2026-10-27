@@ -1,0 +1,14 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  engine:
+    name: FactorKit tests (Linux)
+    runs-on: ubuntu-latest
+    container: swift:6.1-noble
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift test

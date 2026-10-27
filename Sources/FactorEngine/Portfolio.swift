@@ -133,6 +133,12 @@ public enum BasketDiagnostics {
 
     public static func warnings(tickers: [String], correlation: [[Double]],
                                 sectors: [String: String], weights: [String: Double] = [:]) -> [BasketWarning] {
+        correlationWarnings(tickers: tickers, correlation: correlation)
+            + sectorWarnings(tickers: tickers, sectors: sectors, weights: weights)
+    }
+
+    /// Pairs whose return correlation exceeds `correlationLimit`.
+    public static func correlationWarnings(tickers: [String], correlation: [[Double]]) -> [BasketWarning] {
         var out: [BasketWarning] = []
         for i in tickers.indices {
             for j in (i + 1)..<tickers.count {
@@ -142,11 +148,16 @@ public enum BasketDiagnostics {
                 }
             }
         }
-        for (s, share) in sectorShares(tickers: tickers, sectors: sectors, weights: weights).sorted(by: { $0.key < $1.key })
-        where share > sectorLimit + 1e-12 {
-            out.append(BasketWarning(kind: .sectorConcentration(sector: s, share: share)))
-        }
         return out
+    }
+
+    /// Sectors holding more than `sectorLimit` of the basket.
+    public static func sectorWarnings(tickers: [String], sectors: [String: String],
+                                      weights: [String: Double] = [:]) -> [BasketWarning] {
+        sectorShares(tickers: tickers, sectors: sectors, weights: weights)
+            .sorted { $0.key < $1.key }
+            .filter { $0.value > sectorLimit + 1e-12 }
+            .map { BasketWarning(kind: .sectorConcentration(sector: $0.key, share: $0.value)) }
     }
 }
 
