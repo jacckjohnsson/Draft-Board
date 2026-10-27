@@ -217,7 +217,7 @@ struct SettingsView: View {
         } header: {
             Text("Rate limits")
         } footer: {
-            Text("Massive's free plan allows 5 calls a minute, so the first load of about 13 months of prices takes close to an hour. Raise the limits if you have a paid plan. Rate-limit errors are retried automatically with increasing delays.")
+            Text("Massive's free plan allows 5 calls a minute, so the first load of about 13 months of prices takes about 6 minutes for the Dow 30, 20 for the Top 100 and close to an hour for the S&P 500. Raise the limits if you have a paid plan. Rate-limit errors are retried automatically with increasing delays.")
         }
     }
 
