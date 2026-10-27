@@ -1,0 +1,156 @@
+{
+ "id": "dow30",
+ "title": "Dow 30",
+ "members": [
+  {
+   "ticker": "AAPL",
+   "name": "Apple Inc.",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "AMGN",
+   "name": "Amgen",
+   "sector": "Health Care"
+  },
+  {
+   "ticker": "AMZN",
+   "name": "Amazon",
+   "sector": "Consumer Discretionary"
+  },
+  {
+   "ticker": "AXP",
+   "name": "American Express",
+   "sector": "Financials"
+  },
+  {
+   "ticker": "BA",
+   "name": "Boeing",
+   "sector": "Industrials"
+  },
+  {
+   "ticker": "CAT",
+   "name": "Caterpillar Inc.",
+   "sector": "Industrials"
+  },
+  {
+   "ticker": "CRM",
+   "name": "Salesforce",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "CSCO",
+   "name": "Cisco",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "CVX",
+   "name": "Chevron Corporation",
+   "sector": "Energy"
+  },
+  {
+   "ticker": "DIS",
+   "name": "Walt Disney Company (The)",
+   "sector": "Communication Services"
+  },
+  {
+   "ticker": "GS",
+   "name": "Goldman Sachs",
+   "sector": "Financials"
+  },
+  {
+   "ticker": "HD",
+   "name": "Home Depot (The)",
+   "sector": "Consumer Discretionary"
+  },
+  {
+   "ticker": "HON",
+   "name": "Honeywell Technologies",
+   "sector": "Industrials"
+  },
+  {
+   "ticker": "IBM",
+   "name": "IBM",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "JNJ",
+   "name": "Johnson & Johnson",
+   "sector": "Health Care"
+  },
+  {
+   "ticker": "JPM",
+   "name": "JPMorgan Chase",
+   "sector": "Financials"
+  },
+  {
+   "ticker": "KO",
+   "name": "Coca-Cola Company (The)",
+   "sector": "Consumer Staples"
+  },
+  {
+   "ticker": "MCD",
+   "name": "McDonald's",
+   "sector": "Consumer Discretionary"
+  },
+  {
+   "ticker": "MMM",
+   "name": "3M",
+   "sector": "Industrials"
+  },
+  {
+   "ticker": "MRK",
+   "name": "Merck & Co.",
+   "sector": "Health Care"
+  },
+  {
+   "ticker": "MSFT",
+   "name": "Microsoft",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "NKE",
+   "name": "Nike, Inc.",
+   "sector": "Consumer Discretionary"
+  },
+  {
+   "ticker": "NVDA",
+   "name": "Nvidia",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "PG",
+   "name": "Procter & Gamble",
+   "sector": "Consumer Staples"
+  },
+  {
+   "ticker": "SHW",
+   "name": "Sherwin-Williams",
+   "sector": "Materials"
+  },
+  {
+   "ticker": "TRV",
+   "name": "Travelers Companies (The)",
+   "sector": "Financials"
+  },
+  {
+   "ticker": "UNH",
+   "name": "UnitedHealth Group",
+   "sector": "Health Care"
+  },
+  {
+   "ticker": "V",
+   "name": "Visa Inc.",
+   "sector": "Financials"
+  },
+  {
+   "ticker": "VZ",
+   "name": "Verizon",
+   "sector": "Communication Services"
+  },
+  {
+   "ticker": "WMT",
+   "name": "Walmart",
+   "sector": "Consumer Staples"
+  }
+ ]
+}

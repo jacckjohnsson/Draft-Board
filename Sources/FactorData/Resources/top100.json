@@ -1,0 +1,507 @@
+{
+ "id": "top100",
+ "title": "Top 100 S&P 500",
+ "members": [
+  {
+   "ticker": "NVDA",
+   "name": "Nvidia",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "MSFT",
+   "name": "Microsoft",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "AAPL",
+   "name": "Apple Inc.",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "GOOGL",
+   "name": "Alphabet Inc. (Class A)",
+   "sector": "Communication Services"
+  },
+  {
+   "ticker": "AMZN",
+   "name": "Amazon",
+   "sector": "Consumer Discretionary"
+  },
+  {
+   "ticker": "META",
+   "name": "Meta Platforms",
+   "sector": "Communication Services"
+  },
+  {
+   "ticker": "AVGO",
+   "name": "Broadcom",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "TSLA",
+   "name": "Tesla, Inc.",
+   "sector": "Consumer Discretionary"
+  },
+  {
+   "ticker": "BRK.B",
+   "name": "Berkshire Hathaway",
+   "sector": "Financials"
+  },
+  {
+   "ticker": "JPM",
+   "name": "JPMorgan Chase",
+   "sector": "Financials"
+  },
+  {
+   "ticker": "WMT",
+   "name": "Walmart",
+   "sector": "Consumer Staples"
+  },
+  {
+   "ticker": "LLY",
+   "name": "Lilly (Eli)",
+   "sector": "Health Care"
+  },
+  {
+   "ticker": "ORCL",
+   "name": "Oracle Corporation",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "V",
+   "name": "Visa Inc.",
+   "sector": "Financials"
+  },
+  {
+   "ticker": "MA",
+   "name": "Mastercard",
+   "sector": "Financials"
+  },
+  {
+   "ticker": "NFLX",
+   "name": "Netflix",
+   "sector": "Communication Services"
+  },
+  {
+   "ticker": "XOM",
+   "name": "ExxonMobil",
+   "sector": "Energy"
+  },
+  {
+   "ticker": "COST",
+   "name": "Costco",
+   "sector": "Consumer Staples"
+  },
+  {
+   "ticker": "JNJ",
+   "name": "Johnson & Johnson",
+   "sector": "Health Care"
+  },
+  {
+   "ticker": "HD",
+   "name": "Home Depot (The)",
+   "sector": "Consumer Discretionary"
+  },
+  {
+   "ticker": "PLTR",
+   "name": "Palantir Technologies",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "ABBV",
+   "name": "AbbVie",
+   "sector": "Health Care"
+  },
+  {
+   "ticker": "BAC",
+   "name": "Bank of America",
+   "sector": "Financials"
+  },
+  {
+   "ticker": "PG",
+   "name": "Procter & Gamble",
+   "sector": "Consumer Staples"
+  },
+  {
+   "ticker": "CVX",
+   "name": "Chevron Corporation",
+   "sector": "Energy"
+  },
+  {
+   "ticker": "KO",
+   "name": "Coca-Cola Company (The)",
+   "sector": "Consumer Staples"
+  },
+  {
+   "ticker": "GE",
+   "name": "GE Aerospace",
+   "sector": "Industrials"
+  },
+  {
+   "ticker": "AMD",
+   "name": "Advanced Micro Devices",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "UNH",
+   "name": "UnitedHealth Group",
+   "sector": "Health Care"
+  },
+  {
+   "ticker": "CSCO",
+   "name": "Cisco",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "TMUS",
+   "name": "T-Mobile US",
+   "sector": "Communication Services"
+  },
+  {
+   "ticker": "WFC",
+   "name": "Wells Fargo",
+   "sector": "Financials"
+  },
+  {
+   "ticker": "CRM",
+   "name": "Salesforce",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "MS",
+   "name": "Morgan Stanley",
+   "sector": "Financials"
+  },
+  {
+   "ticker": "PM",
+   "name": "Philip Morris International",
+   "sector": "Consumer Staples"
+  },
+  {
+   "ticker": "IBM",
+   "name": "IBM",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "GS",
+   "name": "Goldman Sachs",
+   "sector": "Financials"
+  },
+  {
+   "ticker": "ABT",
+   "name": "Abbott Laboratories",
+   "sector": "Health Care"
+  },
+  {
+   "ticker": "AXP",
+   "name": "American Express",
+   "sector": "Financials"
+  },
+  {
+   "ticker": "LIN",
+   "name": "Linde plc",
+   "sector": "Materials"
+  },
+  {
+   "ticker": "MCD",
+   "name": "McDonald's",
+   "sector": "Consumer Discretionary"
+  },
+  {
+   "ticker": "INTU",
+   "name": "Intuit",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "DIS",
+   "name": "Walt Disney Company (The)",
+   "sector": "Communication Services"
+  },
+  {
+   "ticker": "RTX",
+   "name": "RTX Corporation",
+   "sector": "Industrials"
+  },
+  {
+   "ticker": "T",
+   "name": "AT&T",
+   "sector": "Communication Services"
+  },
+  {
+   "ticker": "MRK",
+   "name": "Merck & Co.",
+   "sector": "Health Care"
+  },
+  {
+   "ticker": "CAT",
+   "name": "Caterpillar Inc.",
+   "sector": "Industrials"
+  },
+  {
+   "ticker": "NOW",
+   "name": "ServiceNow",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "UBER",
+   "name": "Uber",
+   "sector": "Industrials"
+  },
+  {
+   "ticker": "PEP",
+   "name": "PepsiCo",
+   "sector": "Consumer Staples"
+  },
+  {
+   "ticker": "VZ",
+   "name": "Verizon",
+   "sector": "Communication Services"
+  },
+  {
+   "ticker": "TMO",
+   "name": "Thermo Fisher Scientific",
+   "sector": "Health Care"
+  },
+  {
+   "ticker": "BKNG",
+   "name": "Booking Holdings",
+   "sector": "Consumer Discretionary"
+  },
+  {
+   "ticker": "C",
+   "name": "Citigroup",
+   "sector": "Financials"
+  },
+  {
+   "ticker": "ISRG",
+   "name": "Intuitive Surgical",
+   "sector": "Health Care"
+  },
+  {
+   "ticker": "BX",
+   "name": "Blackstone Inc.",
+   "sector": "Financials"
+  },
+  {
+   "ticker": "SCHW",
+   "name": "Charles Schwab Corporation",
+   "sector": "Financials"
+  },
+  {
+   "ticker": "BA",
+   "name": "Boeing",
+   "sector": "Industrials"
+  },
+  {
+   "ticker": "QCOM",
+   "name": "Qualcomm",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "GEV",
+   "name": "GE Vernova",
+   "sector": "Industrials"
+  },
+  {
+   "ticker": "ANET",
+   "name": "Arista Networks",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "SPGI",
+   "name": "S&P Global",
+   "sector": "Financials"
+  },
+  {
+   "ticker": "BLK",
+   "name": "BlackRock",
+   "sector": "Financials"
+  },
+  {
+   "ticker": "AMGN",
+   "name": "Amgen",
+   "sector": "Health Care"
+  },
+  {
+   "ticker": "TXN",
+   "name": "Texas Instruments",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "ADBE",
+   "name": "Adobe Inc.",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "NEE",
+   "name": "NextEra Energy",
+   "sector": "Utilities"
+  },
+  {
+   "ticker": "PGR",
+   "name": "Progressive Corporation",
+   "sector": "Financials"
+  },
+  {
+   "ticker": "TJX",
+   "name": "TJX Companies",
+   "sector": "Consumer Discretionary"
+  },
+  {
+   "ticker": "ACN",
+   "name": "Accenture",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "SYK",
+   "name": "Stryker Corporation",
+   "sector": "Health Care"
+  },
+  {
+   "ticker": "BSX",
+   "name": "Boston Scientific",
+   "sector": "Health Care"
+  },
+  {
+   "ticker": "LOW",
+   "name": "Lowe's",
+   "sector": "Consumer Discretionary"
+  },
+  {
+   "ticker": "HON",
+   "name": "Honeywell Technologies",
+   "sector": "Industrials"
+  },
+  {
+   "ticker": "DHR",
+   "name": "Danaher Corporation",
+   "sector": "Health Care"
+  },
+  {
+   "ticker": "APH",
+   "name": "Amphenol",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "GILD",
+   "name": "Gilead Sciences",
+   "sector": "Health Care"
+  },
+  {
+   "ticker": "ETN",
+   "name": "Eaton Corporation",
+   "sector": "Industrials"
+  },
+  {
+   "ticker": "PFE",
+   "name": "Pfizer",
+   "sector": "Health Care"
+  },
+  {
+   "ticker": "KKR",
+   "name": "KKR & Co.",
+   "sector": "Financials"
+  },
+  {
+   "ticker": "LRCX",
+   "name": "Lam Research",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "UNP",
+   "name": "Union Pacific Corporation",
+   "sector": "Industrials"
+  },
+  {
+   "ticker": "COF",
+   "name": "Capital One",
+   "sector": "Financials"
+  },
+  {
+   "ticker": "DE",
+   "name": "Deere & Company",
+   "sector": "Industrials"
+  },
+  {
+   "ticker": "MU",
+   "name": "Micron Technology",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "ADP",
+   "name": "Automatic Data Processing",
+   "sector": "Industrials"
+  },
+  {
+   "ticker": "KLAC",
+   "name": "KLA Corporation",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "PANW",
+   "name": "Palo Alto Networks",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "AMAT",
+   "name": "Applied Materials",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "CMCSA",
+   "name": "Comcast",
+   "sector": "Communication Services"
+  },
+  {
+   "ticker": "ADI",
+   "name": "Analog Devices",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "CRWD",
+   "name": "CrowdStrike",
+   "sector": "Information Technology"
+  },
+  {
+   "ticker": "MDT",
+   "name": "Medtronic",
+   "sector": "Health Care"
+  },
+  {
+   "ticker": "COP",
+   "name": "ConocoPhillips",
+   "sector": "Energy"
+  },
+  {
+   "ticker": "LMT",
+   "name": "Lockheed Martin",
+   "sector": "Industrials"
+  },
+  {
+   "ticker": "WELL",
+   "name": "Welltower",
+   "sector": "Real Estate"
+  },
+  {
+   "ticker": "NKE",
+   "name": "Nike, Inc.",
+   "sector": "Consumer Discretionary"
+  },
+  {
+   "ticker": "MO",
+   "name": "Altria",
+   "sector": "Consumer Staples"
+  },
+  {
+   "ticker": "SO",
+   "name": "Southern Company",
+   "sector": "Utilities"
+  },
+  {
+   "ticker": "PLD",
+   "name": "Prologis",
+   "sector": "Real Estate"
+  }
+ ],
+ "note": "Approximate top 100 S&P 500 members by market cap as of October 2026. Ranks drift over time, so update this file occasionally."
+}
