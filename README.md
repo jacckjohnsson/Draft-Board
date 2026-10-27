@@ -13,7 +13,7 @@ A native iPhone stock screener built on a multi-factor model (value, quality, mo
 
 ## Xcode setup
 
-1. Open `App/DraftBoard.xcodeproj`. Xcode resolves the local `FactorKit` package from the repo root automatically.
+1. Open `App/DraftBoard.xcodeproj`. Xcode resolves the local `FactorKit` package (in the `FactorKit/` folder) automatically.
 2. Select the **DraftBoard** target, then **Signing & Capabilities**:
    - Choose your **Team**.
    - Change the **Bundle Identifier** from `com.example.draftboard` to something unique, such as `com.yourname.draftboard`.
@@ -24,15 +24,15 @@ A native iPhone stock screener built on a multi-factor model (value, quality, mo
    - Trust your developer certificate (Settings › General › VPN & Device Management).
 5. In the app, open **Settings**, paste both API keys, and tap **Save keys**. Loading starts immediately.
 
-If the project file ever refuses to open, create a new iOS App project named `DraftBoard` (SwiftUI, SwiftData), delete its template Swift files, drag in the `App/DraftBoard` folder, and add the repo root as a local package (File › Add Package Dependencies › Add Local…), linking `FactorEngine` and `FactorData`.
+If the project file ever refuses to open, create a new iOS App project named `DraftBoard` (SwiftUI, SwiftData), delete its template Swift files, drag in the `App/DraftBoard` folder, and add the `FactorKit` folder as a local package (File › Add Package Dependencies › Add Local…), linking `FactorEngine` and `FactorData`.
 
 ### Running the tests
 
 The engine and data layers are a Swift package (`FactorKit`) with XCTest suites that run anywhere Swift runs:
 
-- In Xcode, open `Package.swift` at the repo root (or choose the `FactorKit-Package` scheme) and press ⌘U.
-- From a terminal: `swift test`
-- Without a local toolchain: `docker run --rm -v "$PWD":/w -w /w swift:6.1-noble swift test`
+- In Xcode, open `FactorKit/Package.swift` and press ⌘U.
+- From a terminal: `cd FactorKit && swift test`
+- Without a local toolchain: `docker run --rm -v "$PWD/FactorKit":/w -w /w swift:6.1-noble swift test`
 
 GitHub Actions runs the same tests on every push (`.github/workflows/tests.yml`).
 
@@ -73,8 +73,9 @@ Rules the app enforces:
 ## Architecture
 
 ```
-Package.swift                 FactorKit package (builds and tests on Linux)
-Sources/FactorEngine/         Engine: pure Swift, no UI or network
+FactorKit/                    Swift package (builds and tests on Linux)
+ Package.swift
+ Sources/FactorEngine/         Engine: pure Swift, no UI or network
   Statistics.swift            winsorize, z-score (sector / cross-sectional), ranks, Spearman, Pearson
   Returns.swift               12-1 momentum, realized vol, beta, moving averages, drawdown, Sharpe
   FactorModel.swift           metrics, factors, weights, presets, ScoringEngine
@@ -82,7 +83,7 @@ Sources/FactorEngine/         Engine: pure Swift, no UI or network
   Clustering.swift            hierarchical clustering on correlations
   Portfolio.swift             weights → shares, Shock Lab CSV, basket warnings, consistency check
   VectorMath.swift            Accelerate (vDSP) with a plain-Swift fallback off Apple platforms
-Sources/FactorData/           Services: networking, rate limiting, sync (Foundation only)
+ Sources/FactorData/           Services: networking, rate limiting, sync (Foundation only)
   Models.swift                DailyBars, SplitEvent, Fundamentals, HistorySeries
   Providers.swift             PriceProvider / HistoryProvider / FundamentalsProvider protocols
   MassiveProvider.swift, YahooProvider.swift, FMPProvider.swift
@@ -90,7 +91,7 @@ Sources/FactorData/           Services: networking, rate limiting, sync (Foundat
   Sync.swift                  PriceSync, FundamentalsSync, HistorySync (resume by diffing the cache)
   TradingCalendar.swift       NYSE trading days and holidays
   Resources/                  dow30.json, top100.json, sp500.json (ticker, name, GICS sector)
-Tests/                        XCTest suites (79 tests)
+ Tests/                       XCTest suites (79 tests)
 App/DraftBoard/               iOS app (MVVM)
   Models/                     SwiftData cache models, AppSettings
   Services/                   DataStore (@ModelActor), DataCoordinator, Keychain, LiveDataset

@@ -104,7 +104,7 @@
 			mainGroup = 8D3FC6DB5D0827F168A73277;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				A46A1BCE0B67C45BEC8F435B /* XCLocalSwiftPackageReference ".." */,
+				A46A1BCE0B67C45BEC8F435B /* XCLocalSwiftPackageReference "../FactorKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1BADDC1D73C1A20F347483E1 /* Products */;
@@ -286,21 +286,21 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		A46A1BCE0B67C45BEC8F435B /* XCLocalSwiftPackageReference ".." */ = {
+		A46A1BCE0B67C45BEC8F435B /* XCLocalSwiftPackageReference "../FactorKit" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ..;
+			relativePath = ../FactorKit;
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		C960230B52755080CB3B0F2B /* FactorEngine */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A46A1BCE0B67C45BEC8F435B /* XCLocalSwiftPackageReference ".." */;
+			package = A46A1BCE0B67C45BEC8F435B /* XCLocalSwiftPackageReference "../FactorKit" */;
 			productName = FactorEngine;
 		};
 		2177BAAED0DB8D0EB43B817C /* FactorData */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A46A1BCE0B67C45BEC8F435B /* XCLocalSwiftPackageReference ".." */;
+			package = A46A1BCE0B67C45BEC8F435B /* XCLocalSwiftPackageReference "../FactorKit" */;
 			productName = FactorData;
 		};
 /* End XCSwiftPackageProductDependency section */
