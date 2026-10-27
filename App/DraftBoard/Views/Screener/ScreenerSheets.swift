@@ -14,7 +14,7 @@ struct FilterSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Sectors") {
+                Section {
                     if sectors.isEmpty {
                         Text("Sectors appear once the universe has loaded.").foregroundStyle(.secondary)
                     }
@@ -29,6 +29,8 @@ struct FilterSheet: View {
                             }
                         }
                     }
+                } header: {
+                    Text("Sectors")
                 } footer: {
                     Text(draft.sectors.isEmpty ? "All sectors are shown." : "\(draft.sectors.count) selected.")
                 }
