@@ -50,7 +50,7 @@ Keys are entered in Settings and stored in the iOS Keychain. They never appear i
 |---|---|---|---|
 | **Massive** `GET /v2/aggs/grouped/locale/us/market/stocks/{date}` | Screener, Stock Detail, Watchlist, Export | Daily closes for all US stocks, one request per trading day | Backfill ~13 months, then 1 call per day |
 | **Massive** `GET /stocks/v1/splits` | Same | Split events, applied to the cached closes | Daily |
-| **Massive** `GET /v2/aggs/ticker/{t}/range/1/day/{from}/{to}` | Custom tickers only | One-time history for a custom ticker outside the S&P 500 | Once |
+| **Massive** `GET /v2/aggs/ticker/{t}/range/1/day/{from}/{to}` | First load of small universes, new or custom tickers | ~13 months for one ticker, used when it takes fewer calls than grouped days | Once per ticker |
 | **FMP** `/stable/profile`, `/stable/ratios-ttm` | Screener, Detail, filters | Sector, market cap, P/E, P/B, EV/EBITDA, ROE, margins, D/E, dividend yield | Weekly |
 | **Yahoo Finance** `v8/finance/chart/{t}?range=10y&interval=1d` | Backtest only | 10 years of adjusted closes | Monthly |
 
@@ -66,7 +66,7 @@ Rules the app enforces:
 
 ### First-load timing on free plans
 
-- **Prices:** about 275 trading days at 5 calls per minute takes around 55 minutes. Keep the app open in the foreground. Partial results appear as the backfill runs, but momentum stays blank until 253 trading days are cached.
+- **Prices:** the app picks whichever download needs fewer calls. One grouped call returns every US stock for one day (about 275 calls for ~13 months), and one per-ticker call returns ~13 months for one stock. At 5 calls per minute that means about 6 minutes for the Dow 30, about 20 minutes for the Top 100 (both per ticker), and about 55 minutes for the full S&P 500 (grouped). After the first load, a daily update is 1 grouped call. Keep the app open in the foreground. Partial results appear as the download runs, but momentum stays blank until 253 trading days are cached.
 - **Fundamentals:** 2 calls per stock. Top 100 uses about 200 calls (one day). The full S&P 500 needs about 1,000 calls, so on the free plan it loads over 4 days and resumes automatically each day.
 - **Backtest history:** 1 call per ticker, the first time you run a backtest.
 
@@ -91,7 +91,7 @@ FactorKit/                    Swift package (builds and tests on Linux)
   Sync.swift                  PriceSync, FundamentalsSync, HistorySync (resume by diffing the cache)
   TradingCalendar.swift       NYSE trading days and holidays
   Resources/                  dow30.json, top100.json, sp500.json (ticker, name, GICS sector)
- Tests/                       XCTest suites (79 tests)
+ Tests/                       XCTest suites (81 tests)
 App/DraftBoard/               iOS app (MVVM)
   Models/                     SwiftData cache models, AppSettings
   Services/                   DataStore (@ModelActor), DataCoordinator, Keychain, LiveDataset

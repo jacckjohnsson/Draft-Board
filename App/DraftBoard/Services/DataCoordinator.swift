@@ -21,7 +21,6 @@ final class DataCoordinator {
     private let yahoo: YahooHistoryProvider
 
     var priceProgress = SyncProgress(source: "Massive")
-    var backfillProgress: SyncProgress?
     var fundamentalsProgress = SyncProgress(source: "Financial Modeling Prep")
     var historyProgress = SyncProgress(source: "Yahoo Finance")
 
@@ -106,7 +105,7 @@ final class DataCoordinator {
         refreshLive()
     }
 
-    var isSyncingLive: Bool { priceProgress.isRunning || fundamentalsProgress.isRunning || (backfillProgress?.isRunning ?? false) }
+    var isSyncingLive: Bool { priceProgress.isRunning || fundamentalsProgress.isRunning }
 
     /// Fetches whatever is missing or stale. Safe to call often; does nothing if already running.
     func refreshLive() {
@@ -147,10 +146,10 @@ final class DataCoordinator {
         if hasMassiveKey {
             let sync = PriceSync(provider: massive, store: store)
             lastRebuildCount = 0
-            _ = await sync.run(tracked: trackedTickers) { [weak self] p in
+            let universe = Set(universeMembers().map(\.ticker)).union([Universe.benchmark])
+            _ = await sync.run(tracked: trackedTickers, universe: universe) { [weak self] p in
                 await self?.handlePriceProgress(p)
             }
-            await backfillCustomTickers(sync)
         } else {
             priceProgress = SyncProgress(source: massive.sourceName, phase: .failed("Add your Massive API key in Settings to load prices."))
         }
@@ -177,7 +176,6 @@ final class DataCoordinator {
         }
     }
 
-    private func setBackfillProgress(_ p: SyncProgress) { backfillProgress = p }
     private func setHistoryProgress(_ p: SyncProgress) { historyProgress = p }
 
     private func handleFundamentalsProgress(_ p: SyncProgress) async {
@@ -185,20 +183,6 @@ final class DataCoordinator {
         if p.completed - lastRebuildCount >= 20 {
             lastRebuildCount = p.completed
             await reloadDataset()
-        }
-    }
-
-    /// Custom tickers outside the S&P 500 weren't kept from earlier grouped downloads,
-    /// so their history is fetched once per ticker.
-    private func backfillCustomTickers(_ sync: PriceSync) async {
-        let sp = Set((try? UniverseLoader.load(.sp500).members.map(\.ticker)) ?? [])
-        var todo: [String] = []
-        for t in UniverseLoader.parseCustom(settings.customTickers) where !sp.contains(t) {
-            if await store.metadata("backfilled.\(t)") == nil { todo.append(t) }
-        }
-        guard !todo.isEmpty else { return }
-        _ = await sync.backfill(tickers: todo) { [weak self] p in
-            await self?.setBackfillProgress(p)
         }
     }
 

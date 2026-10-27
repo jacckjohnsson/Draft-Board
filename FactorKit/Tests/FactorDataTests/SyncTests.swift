@@ -17,6 +17,13 @@ actor MemoryStore: PriceStore, FundamentalsStore, HistoryStore {
     func mergeTickerCloses(_ ticker: String, closes: [String: Double]) async throws {
         for (d, c) in closes { days[d, default: DailyBars(date: d, closes: [:])].closes[ticker] = c }
     }
+    func closeCounts(tickers: Set<String>, from: String) async throws -> [String: Int] {
+        var out: [String: Int] = [:]
+        for (d, bars) in days where d >= from {
+            for t in tickers where bars.closes[t] != nil { out[t, default: 0] += 1 }
+        }
+        return out
+    }
     func replaceSplits(_ s: [SplitEvent]) async throws { splits = s }
     func metadata(_ key: String) async -> String? { meta[key] }
     func setMetadata(_ key: String, _ value: String?) async { meta[key] = value }
@@ -33,18 +40,24 @@ actor MemoryStore: PriceStore, FundamentalsStore, HistoryStore {
 struct FakePrices: PriceProvider {
     let sourceName = "Fake"
     let calls: CallCounter
+    var tickerCalls = CallCounter()
     var emptyDates: Set<String> = []
     var failAfter: Int? = nil
     func dailyBars(for date: String) async throws -> DailyBars? {
         let n = await calls.increment()
         if let failAfter, n > failAfter { throw CancellationError() }
         if emptyDates.contains(date) { return nil }
-        return DailyBars(date: date, closes: ["AAA": 10, "SPY": 400, "JUNK": 1])
+        var closes: [String: Double] = ["AAA": 10, "SPY": 400, "JUNK": 1]
+        for i in 0..<400 { closes["T\(i)"] = 20 }
+        return DailyBars(date: date, closes: closes)
     }
     func splits(since: String) async throws -> [SplitEvent] {
         [SplitEvent(id: "s", ticker: "AAA", executionDate: since, splitFrom: 1, splitTo: 2)]
     }
-    func tickerHistory(_ ticker: String, from: String, to: String) async throws -> [String: Double] { [to: 5] }
+    func tickerHistory(_ ticker: String, from: String, to: String) async throws -> [String: Double] {
+        _ = await tickerCalls.increment()
+        return Dictionary(uniqueKeysWithValues: TradingCalendar.tradingDays(from: from, to: to).map { ($0, 5.0) })
+    }
 }
 
 actor CallCounter {
@@ -93,64 +106,123 @@ final class SyncTests: XCTestCase {
         XCTAssertEqual(TradingCalendar.latestCompleteTradingDay(now: now.addingTimeInterval(3 * 86_400)), "2024-07-12")
     }
 
-    func testPriceSyncFetchesOnlyMissingDatesAndResumes() async throws {
+    /// A universe bigger than the number of missing days, so grouped days are cheaper.
+    let bigUniverse: Set<String> = Set((0..<400).map { "T\($0)" }).union(["AAA", "SPY"])
+
+    func testFreshInstallWithSmallUniverseDownloadsPerTicker() async throws {
         let store = MemoryStore()
-        let counter = CallCounter()
+        let fixedNow = now
+        let prices = FakePrices(calls: CallCounter())
+        let sync = PriceSync(provider: prices, store: store, now: { fixedNow })
+        let plan = try await sync.plan(universe: ["AAA", "SPY"])
+        XCTAssertEqual(plan.perTicker, ["AAA", "SPY"])
+        XCTAssertFalse(plan.groupedFirst)
+        let log = ProgressLog()
+        let r = await sync.run(tracked: ["AAA", "SPY"], universe: ["AAA", "SPY"], progress: { await log.add($0) })
+        XCTAssertEqual(r.phase, .finished)
+        let tickerCalls = await prices.tickerCalls.n
+        let dayCalls = await prices.calls.n
+        XCTAssertEqual(tickerCalls, 2)
+        XCTAssertEqual(dayCalls, 0, "per-ticker data already covers every day")
+        let days = await store.days
+        XCTAssertGreaterThan(days.count, 270)
+        XCTAssertEqual(days["2024-07-10"]?.closes["AAA"], 5)
+        let events = await log.events
+        XCTAssertEqual(events.last?.completed, events.last?.total)
+        XCTAssertEqual(events.last?.total, 3, "2 tickers + splits")
+    }
+
+    func testBigUniverseUsesGroupedDaysAndResumes() async throws {
+        let store = MemoryStore()
         let fixedNow = now
         // First run is interrupted after 10 days.
-        let interrupted = PriceSync(provider: FakePrices(calls: counter, failAfter: 10), store: store, now: { fixedNow })
+        let interrupted = PriceSync(provider: FakePrices(calls: CallCounter(), failAfter: 10), store: store, now: { fixedNow })
         let all = try await interrupted.missingDates()
         XCTAssertGreaterThan(all.count, 270)
         XCTAssertEqual(all.first, "2024-07-10", "newest first")
-        let r1 = await interrupted.run(tracked: ["AAA", "SPY"], progress: { _ in })
+        let plan = try await interrupted.plan(universe: bigUniverse)
+        XCTAssertTrue(plan.groupedFirst)
+        XCTAssertEqual(plan.perTicker, [])
+        let r1 = await interrupted.run(tracked: bigUniverse, universe: bigUniverse, progress: { _ in })
         XCTAssertEqual(r1.phase, .idle)
         let afterFirst = await store.days.count
         XCTAssertEqual(afterFirst, 10)
 
         // Relaunch: picks up where it stopped, never re-downloading stored days.
-        let counter2 = CallCounter()
+        let prices = FakePrices(calls: CallCounter())
         let log = ProgressLog()
-        let resumed = PriceSync(provider: FakePrices(calls: counter2), store: store, now: { fixedNow })
-        let r2 = await resumed.run(tracked: ["AAA", "SPY"], progress: { await log.add($0) })
+        let resumed = PriceSync(provider: prices, store: store, now: { fixedNow })
+        let r2 = await resumed.run(tracked: bigUniverse, universe: bigUniverse, progress: { await log.add($0) })
         XCTAssertEqual(r2.phase, .finished)
-        let calls2 = await counter2.n
-        XCTAssertEqual(calls2, all.count - 10)
+        let dayCalls = await prices.calls.n
+        let tickerCalls = await prices.tickerCalls.n
+        XCTAssertEqual(dayCalls, all.count - 10)
+        XCTAssertEqual(tickerCalls, 0)
         let days = await store.days
         XCTAssertEqual(days.count, all.count)
-        XCTAssertEqual(days["2024-07-10"]?.closes.keys.sorted(), ["AAA", "SPY"], "untracked tickers are dropped")
+        XCTAssertNil(days["2024-07-10"]?.closes["JUNK"], "untracked tickers are dropped")
+        XCTAssertEqual(days["2024-07-10"]?.closes.count, bigUniverse.count)
         let splits = await store.splits
         XCTAssertEqual(splits.count, 1)
         let events = await log.events
-        XCTAssertEqual(events.last?.completed, events.last?.total)
         XCTAssertTrue(events.contains { $0.completed == 5 && $0.isRunning }, "reports X of N while running")
 
-        // Third run: nothing to do, splits already refreshed today.
-        let counter3 = CallCounter()
-        let r3 = await PriceSync(provider: FakePrices(calls: counter3), store: store, now: { fixedNow }).run(tracked: [], progress: { _ in })
+        // Same day again: nothing to do, splits already refreshed today.
+        let idle = FakePrices(calls: CallCounter())
+        let r3 = await PriceSync(provider: idle, store: store, now: { fixedNow }).run(tracked: bigUniverse, universe: bigUniverse, progress: { _ in })
         XCTAssertEqual(r3.detail, "Up to date")
-        let calls3 = await counter3.n
-        XCTAssertEqual(calls3, 0)
+        let idleCalls = await idle.calls.n
+        let idleTickerCalls = await idle.tickerCalls.n
+        XCTAssertEqual(idleCalls, 0)
+        XCTAssertEqual(idleTickerCalls, 0)
+    }
+
+    func testDailyUpdateIsOneGroupedCall() async throws {
+        let store = MemoryStore()
+        let fixedNow = now
+        _ = await PriceSync(provider: FakePrices(calls: CallCounter()), store: store, now: { fixedNow })
+            .run(tracked: ["AAA", "SPY"], universe: ["AAA", "SPY"], progress: { _ in })
+        // Next evening (Thursday 2024-07-11, 8 pm New York).
+        let tomorrow = fixedNow.addingTimeInterval(86_400)
+        let prices = FakePrices(calls: CallCounter())
+        let r = await PriceSync(provider: prices, store: store, now: { tomorrow })
+            .run(tracked: ["AAA", "SPY"], universe: ["AAA", "SPY"], progress: { _ in })
+        XCTAssertEqual(r.phase, .finished)
+        let dayCalls = await prices.calls.n
+        let tickerCalls = await prices.tickerCalls.n
+        XCTAssertEqual(dayCalls, 1)
+        XCTAssertEqual(tickerCalls, 0)
+    }
+
+    func testNewTickerWithGapsGetsOneRequest() async throws {
+        let store = MemoryStore()
+        let fixedNow = now
+        _ = await PriceSync(provider: FakePrices(calls: CallCounter()), store: store, now: { fixedNow })
+            .run(tracked: bigUniverse, universe: bigUniverse, progress: { _ in })
+        // ZZZ was never in the grouped downloads, and every day is already stored.
+        let prices = FakePrices(calls: CallCounter())
+        let sync = PriceSync(provider: prices, store: store, now: { fixedNow })
+        let plan = try await sync.plan(universe: ["AAA", "SPY", "ZZZ"])
+        XCTAssertEqual(plan.perTicker, ["ZZZ"])
+        _ = await sync.run(tracked: ["AAA", "SPY", "ZZZ"], universe: ["AAA", "SPY", "ZZZ"], progress: { _ in })
+        let tickerCalls = await prices.tickerCalls.n
+        XCTAssertEqual(tickerCalls, 1)
+        let z = await store.days["2024-07-10"]?.closes["ZZZ"]
+        XCTAssertEqual(z, 5)
+        // Marked as backfilled, so it is not requested again.
+        let again = try await sync.plan(universe: ["AAA", "SPY", "ZZZ"])
+        XCTAssertEqual(again.perTicker, [])
     }
 
     func testEmptyRecentDayIsRetriedButOldEmptyDayIsMarkedClosed() async throws {
         let store = MemoryStore()
         let fixedNow = now
         let p = FakePrices(calls: CallCounter(), emptyDates: ["2024-07-10", "2024-06-03"])
-        _ = await PriceSync(provider: p, store: store, now: { fixedNow }).run(tracked: ["AAA"], progress: { _ in })
+        _ = await PriceSync(provider: p, store: store, now: { fixedNow }).run(tracked: bigUniverse, universe: bigUniverse, progress: { _ in })
         let closed = await store.closed
         XCTAssertEqual(closed, ["2024-06-03"])
         let missing = try await PriceSync(provider: p, store: store, now: { fixedNow }).missingDates()
         XCTAssertEqual(missing, ["2024-07-10"])
-    }
-
-    func testBackfillMergesCustomTicker() async {
-        let store = MemoryStore()
-        let fixedNow = now
-        let r = await PriceSync(provider: FakePrices(calls: CallCounter()), store: store, now: { fixedNow })
-            .backfill(tickers: ["ZZZ"], progress: { _ in })
-        XCTAssertEqual(r.phase, .finished)
-        let d = await store.days["2024-07-10"]?.closes["ZZZ"]
-        XCTAssertEqual(d, 5)
     }
 
     func testFundamentalsSyncSkipsFreshAndPausesAtDailyQuota() async throws {

@@ -52,14 +52,30 @@ actor DataStore: PriceStore, FundamentalsStore, HistoryStore {
     }
 
     func mergeTickerCloses(_ ticker: String, closes: [String: Double]) throws {
-        let days = try modelContext.fetch(FetchDescriptor<PriceDay>(predicate: #Predicate { !$0.isClosed }))
-        for day in days {
-            guard let c = closes[day.date] else { continue }
-            var map = (day.payload.flatMap { try? CacheCoding.decode([String: Double].self, from: $0) }) ?? [:]
-            map[ticker] = c
-            day.payload = try CacheCoding.encode(map)
+        let days = try modelContext.fetch(FetchDescriptor<PriceDay>())
+        var byDate: [String: PriceDay] = [:]
+        for d in days { byDate[d.date] = d }
+        for (date, c) in closes {
+            if let day = byDate[date] {
+                var map = (day.payload.flatMap { try? CacheCoding.decode([String: Double].self, from: $0) }) ?? [:]
+                map[ticker] = c
+                day.payload = try CacheCoding.encode(map)
+                day.isClosed = false
+            } else {
+                modelContext.insert(PriceDay(date: date, isClosed: false, payload: try CacheCoding.encode([ticker: c])))
+            }
         }
         try modelContext.save()
+    }
+
+    func closeCounts(tickers: Set<String>, from: String) throws -> [String: Int] {
+        let days = try modelContext.fetch(FetchDescriptor<PriceDay>(predicate: #Predicate { !$0.isClosed }))
+        var out: [String: Int] = [:]
+        for day in days where day.date >= from {
+            guard let p = day.payload, let map = try? CacheCoding.decode([String: Double].self, from: p) else { continue }
+            for t in tickers where map[t] != nil { out[t, default: 0] += 1 }
+        }
+        return out
     }
 
     func replaceSplits(_ splits: [SplitEvent]) throws {

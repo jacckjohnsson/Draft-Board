@@ -36,8 +36,10 @@ public protocol PriceStore: Sendable {
     func handledPriceDates() async throws -> Set<String>
     func savePriceDay(_ bars: DailyBars) async throws
     func markMarketClosed(_ date: String) async throws
-    /// Merges one ticker's closes into existing days (custom-ticker backfill).
+    /// Merges one ticker's closes into the stored days, creating any day that doesn't exist yet.
     func mergeTickerCloses(_ ticker: String, closes: [String: Double]) async throws
+    /// For each ticker, how many stored trading days on or after `from` have a close for it.
+    func closeCounts(tickers: Set<String>, from: String) async throws -> [String: Int]
     func replaceSplits(_ splits: [SplitEvent]) async throws
     func metadata(_ key: String) async -> String?
     func setMetadata(_ key: String, _ value: String?) async
@@ -107,30 +109,68 @@ public struct PriceSync: Sendable {
         return TradingCalendar.tradingDays(from: start, to: end).filter { !handled.contains($0) }.reversed()
     }
 
-    /// Downloads every missing day (one grouped call per day), then refreshes splits once a day.
-    /// Safe to call repeatedly: completed days are skipped, so an interrupted run resumes.
-    public func run(tracked: Set<String>, progress: ProgressHandler) async -> SyncProgress {
+    /// A ticker counts as covered when it has closes on at least this share of the window's trading days.
+    static let coverageThreshold = 0.9
+
+    /// How a sync run will fetch what's missing.
+    public struct Plan: Sendable, Equatable {
+        /// Tickers to download one request each, over the whole window.
+        public var perTicker: [String]
+        /// Whether grouped days come before the per-ticker requests.
+        public var groupedFirst: Bool
+        public var missingDays: Int
+    }
+
+    /// Chooses the cheaper of two strategies, counting API calls:
+    ///  - per ticker first: one request per under-covered ticker, then grouped calls for any
+    ///    days still missing (usually none). Best for a fresh install with a small universe.
+    ///  - grouped first: one request per missing day, which fills every tracked ticker, then
+    ///    per-ticker requests only for tickers with gaps inside already-stored days. Best for
+    ///    daily updates and big universes.
+    public func plan(universe: Set<String>) async throws -> Plan {
+        let (start, end) = window()
+        let missing = try await missingDates()
+        let expected = Double(TradingCalendar.tradingDays(from: start, to: end).count)
+        let needed = expected * Self.coverageThreshold
+        let counts = try await store.closeCounts(tickers: universe, from: start)
+        var needing: [String] = []
+        for t in universe.sorted() where Double(counts[t] ?? 0) < needed {
+            if await store.metadata("backfilled.\(t)") == nil { needing.append(t) }
+        }
+        let gap = needing.filter { Double((counts[$0] ?? 0) + missing.count) < needed }
+        if needing.count < missing.count + gap.count {
+            return Plan(perTicker: needing, groupedFirst: false, missingDays: missing.count)
+        }
+        return Plan(perTicker: gap, groupedFirst: true, missingDays: missing.count)
+    }
+
+    private func window() -> (start: String, end: String) {
+        let end = TradingCalendar.latestCompleteTradingDay(now: now())
+        return (TradingCalendar.adding(days: -Freshness.priceWindowCalendarDays, to: end), end)
+    }
+
+    /// Fills the live price window for `universe` with as few calls as possible, then
+    /// refreshes splits once a day. Grouped days keep every `tracked` ticker. Safe to call
+    /// repeatedly: stored data is skipped, so an interrupted run resumes where it stopped.
+    public func run(tracked: Set<String>, universe: Set<String>, progress: ProgressHandler) async -> SyncProgress {
         var p = SyncProgress(source: provider.sourceName, phase: .running, detail: "Checking cache…")
         do {
-            let dates = try await missingDates()
-            p.total = dates.count + 1   // + splits refresh
+            let plan = try await plan(universe: universe)
+            p.total = plan.perTicker.count + plan.missingDays + 1   // + splits refresh
             await progress(p)
-            let today = TradingCalendar.isoString(now())
-            let closureCutoff = TradingCalendar.adding(days: -Freshness.closureConfirmationDays, to: today)
 
-            for d in dates {
-                try Task.checkCancellation()
-                p.detail = "Prices for \(d)"
-                await progress(p)
-                if let bars = try await provider.dailyBars(for: d) {
-                    try await store.savePriceDay(bars.filtered(to: tracked))
-                } else if d < closureCutoff {
-                    try await store.markMarketClosed(d)
-                }
-                p.completed += 1
-                await progress(p)
+            if plan.groupedFirst {
+                try await fetchGroupedDays(tracked: tracked, progress: &p, handler: progress)
+                try await fetchTickers(plan.perTicker, progress: &p, handler: progress)
+            } else {
+                try await fetchTickers(plan.perTicker, progress: &p, handler: progress)
+                // Per-ticker data usually covers every day; fetch whatever is still missing.
+                let before = p.completed
+                try await fetchGroupedDays(tracked: tracked, progress: &p, handler: progress)
+                p.total = p.total - plan.missingDays + (p.completed - before)
             }
 
+            let today = TradingCalendar.isoString(now())
             if await store.metadata("splits.refreshed") != today {
                 p.detail = "Stock splits"
                 await progress(p)
@@ -141,7 +181,7 @@ public struct PriceSync: Sendable {
             }
             p.completed = p.total
             p.phase = .finished
-            p.detail = dates.isEmpty ? "Up to date" : "Loaded \(dates.count) trading days"
+            p.detail = p.total <= 1 ? "Up to date" : "Prices loaded"
         } catch is CancellationError {
             p.phase = .idle
             p.detail = "Paused. Will resume where it left off."
@@ -152,31 +192,45 @@ public struct PriceSync: Sendable {
         return p
     }
 
-    /// Backfills tickers that were added after the grouped days were stored.
-    public func backfill(tickers: [String], progress: ProgressHandler) async -> SyncProgress {
-        var p = SyncProgress(source: provider.sourceName, total: tickers.count, phase: .running)
-        let end = TradingCalendar.latestCompleteTradingDay(now: now())
-        let start = TradingCalendar.adding(days: -Freshness.priceWindowCalendarDays, to: end)
+    /// One grouped call per missing day, newest first.
+    private func fetchGroupedDays(tracked: Set<String>, progress p: inout SyncProgress, handler: ProgressHandler) async throws {
+        let dates = try await missingDates()
+        let today = TradingCalendar.isoString(now())
+        let closureCutoff = TradingCalendar.adding(days: -Freshness.closureConfirmationDays, to: today)
+        for d in dates {
+            try Task.checkCancellation()
+            p.detail = "Prices for \(d)"
+            await handler(p)
+            if let bars = try await provider.dailyBars(for: d) {
+                try await store.savePriceDay(bars.filtered(to: tracked))
+            } else if d < closureCutoff {
+                try await store.markMarketClosed(d)
+            }
+            p.completed += 1
+            await handler(p)
+        }
+    }
+
+    /// One request per ticker over the whole window. A failing ticker is recorded, not fatal.
+    private func fetchTickers(_ tickers: [String], progress p: inout SyncProgress, handler: ProgressHandler) async throws {
+        let (start, end) = window()
         for t in tickers {
-            p.detail = "History for \(t)"
-            await progress(p)
+            try Task.checkCancellation()
+            p.detail = "Price history for \(t)"
+            await handler(p)
             do {
                 let closes = try await provider.tickerHistory(t, from: start, to: end)
                 try await store.mergeTickerCloses(t, closes: closes)
                 await store.setMetadata("backfilled.\(t)", end)
-            } catch is CancellationError {
-                p.phase = .idle
-                await progress(p)
-                return p
-            } catch {
-                p.failures[t] = Self.describe(error)
+            } catch let e as ProviderError {
+                if case .missingAPIKey = e { throw e }
+                p.failures[t] = Self.describe(e)
+            } catch let e as HTTPError where e != .unauthorized {
+                p.failures[t] = e.userMessage
             }
             p.completed += 1
-            await progress(p)
+            await handler(p)
         }
-        p.phase = .finished
-        await progress(p)
-        return p
     }
 
     static func describe(_ error: Error) -> String {

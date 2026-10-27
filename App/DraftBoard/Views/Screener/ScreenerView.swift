@@ -116,7 +116,6 @@ struct ScreenerView: View {
             if data.priceProgress.isRunning || isProblem(data.priceProgress) {
                 SyncBanner(progress: data.priceProgress, etaPerItem: 60 / Double(max(1, settings.massiveCallsPerMinute)))
             }
-            if let b = data.backfillProgress, b.isRunning { SyncBanner(progress: b) }
             if data.fundamentalsProgress.isRunning || isProblem(data.fundamentalsProgress) {
                 SyncBanner(progress: data.fundamentalsProgress, etaPerItem: 120 / Double(max(1, settings.fmpCallsPerMinute)))
             }
